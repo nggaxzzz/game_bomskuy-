@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>BOMSKUY - Arcade Bomber</title>
+
+  <!-- Google Fonts: Press Start 2P untuk judul arcade, Exo 2 untuk UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Exo+2:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+
+  <!-- ==========================================
+       WELCOME SCREEN - Layar Awal
+  =========================================== -->
+  <div id="welcome-screen" class="screen active">
+    <!-- Background animasi grid bergerak -->
+    <div class="bg-grid-anim"></div>
+    <!-- Partikel latar belakang -->
+    <div class="bg-particles" id="bg-particles"></div>
+
+    <div class="welcome-content">
+      <!-- Logo & Judul -->
+      <div class="logo-container">
+        <div class="logo-bomb-icon">💣</div>
+        <h1 class="game-title">BOMSKUY</h1>
+        <p class="game-subtitle">◆ ARCADE BOMBER ◆</p>
+      </div>
+
+      <!-- Form Input Nama + Tombol Mulai -->
+      <div class="input-section">
+        <div class="input-group">
+          <label class="input-label" for="player-name-input">NAMA PEMAIN</label>
+          <input
+            type="text"
+            id="player-name-input"
+            class="name-input"
+            placeholder="Ketik namamu..."
+            maxlength="12"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+        <button id="start-btn" class="neon-btn primary-btn">
+          <span class="btn-icon">▶</span>
+          <span class="btn-text">MULAI GAME</span>
+        </button>
+      </div>
+
+      <!-- Petunjuk kontrol -->
+      <div class="controls-legend">
+        <div class="legend-item"><kbd>↑↓←→</kbd> <span>Gerak</span></div>
+        <div class="legend-item"><kbd>SPACE</kbd> <span>Pasang Bom</span></div>
+        <div class="legend-item"><kbd>ENTER</kbd> <span>Mulai</span></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       GAME SCREEN - Layar Permainan
+  =========================================== -->
+  <div id="game-screen" class="screen">
+
+    <!-- HUD: Status Permainan di atas -->
+    <div id="hud">
+      <div class="hud-card" id="hud-player-card">
+        <div class="hud-label">👤 PEMAIN</div>
+        <div id="hud-name" class="hud-value">PLAYER</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">⭐ SKOR</div>
+        <div id="hud-score" class="hud-value score-display">0</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">❤️ NYAWA</div>
+        <div id="hud-lives" class="hud-value">❤️❤️❤️</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">⏱️ WAKTU</div>
+        <div id="hud-timer" class="hud-value timer-display">00:00</div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-label">👾 MUSUH</div>
+        <div id="hud-enemies" class="hud-value enemy-count">4</div>
+      </div>
+    </div>
+
+    <!-- Area permainan - Grid dirender oleh JS -->
+    <div id="game-area">
+      <div id="game-grid">
+        <!-- Tile & entitas dirender oleh JavaScript -->
+      </div>
+    </div>
+
+    <!-- Status Power-up bawah -->
+    <div id="status-bar">
+      <div class="status-item">
+        <span class="status-icon">💣</span>
+        <span class="status-label">Radius:</span>
+        <span id="stat-radius" class="status-val">2</span>
+      </div>
+      <div class="status-item">
+        <span class="status-icon">⚡</span>
+        <span class="status-label">Speed:</span>
+        <span id="stat-speed" class="status-val">Normal</span>
+      </div>
+      <div class="status-item hint-item">
+        <span class="hint-text">SPACE = BOM &nbsp;|&nbsp; ARROW = GERAK</span>
+      </div>
+    </div>
+
+    <!-- Kontrol sentuh untuk mobile -->
+    <div id="mobile-controls">
+      <div class="dpad-container">
+        <div class="dpad">
+          <button class="dpad-btn" id="btn-up" aria-label="Atas">▲</button>
+          <div class="dpad-row">
+            <button class="dpad-btn" id="btn-left" aria-label="Kiri">◀</button>
+            <button class="dpad-btn dpad-center" id="btn-bomb" aria-label="Bom">💣</button>
+            <button class="dpad-btn" id="btn-right" aria-label="Kanan">▶</button>
+          </div>
+          <button class="dpad-btn" id="btn-down" aria-label="Bawah">▼</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ==========================================
+       GAME OVER SCREEN - Layar Kalah
+  =========================================== -->
+  <div id="gameover-screen" class="screen">
+    <div class="overlay-backdrop"></div>
+    <div class="overlay-card gameover-card">
+      <div class="overlay-emoji">💀</div>
+      <h2 class="overlay-title gameover-title">GAME OVER</h2>
+
+      <div class="result-table">
+        <div class="result-row">
+          <span class="result-label">PEMAIN</span>
+          <span class="result-val" id="go-name">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">SKOR AKHIR</span>
+          <span class="result-val highlight" id="go-score">0</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">WAKTU</span>
+          <span class="result-val" id="go-time">00:00</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">MUSUH DIKALAHKAN</span>
+          <span class="result-val" id="go-kills">0</span>
+        </div>
+      </div>
+
+      <button class="neon-btn" id="go-menu-btn">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-text">KEMBALI KE MENU</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- ==========================================
+       WIN SCREEN - Layar Menang
+  =========================================== -->
+  <div id="win-screen" class="screen">
+    <!-- Confetti container -->
+    <div id="confetti-container"></div>
+    <div class="overlay-backdrop win-backdrop"></div>
+
+    <div class="overlay-card win-card">
+      <div class="overlay-emoji trophy-bounce">🏆</div>
+      <h2 class="overlay-title win-title">KAMU MENANG!</h2>
+
+      <div class="result-table">
+        <div class="result-row">
+          <span class="result-label">PEMAIN</span>
+          <span class="result-val" id="win-name">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">SKOR TOTAL</span>
+          <span class="result-val highlight gold-text" id="win-score">0</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">WAKTU</span>
+          <span class="result-val" id="win-time">00:00</span>
+        </div>
+        <div class="result-row">
+          <span class="result-label">MUSUH DIKALAHKAN</span>
+          <span class="result-val" id="win-kills">0</span>
+        </div>
+      </div>
+
+      <button class="neon-btn win-btn" id="win-menu-btn">
+        <span class="btn-icon">🏠</span>
+        <span class="btn-text">KEMBALI KE MENU</span>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Game Script -->
+  <script src="game.js"></script>
+</body>
+</html>

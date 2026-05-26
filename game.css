@@ -1,0 +1,818 @@
+
+/* ============================================================
+   BOMSKUY - ARCADE BOMBER
+   Tema: Neon Arcade Futuristik
+   Font: Press Start 2P (arcade) + Exo 2 (UI)
+   Warna: Cyan, Ungu, Biru Neon, Hitam
+   ============================================================ */
+
+/* === VARIABEL CSS === */
+:root {
+  --cyan:      #00ffff;
+  --blue:      #0066ff;
+  --purple:    #9900ff;
+  --pink:      #ff00cc;
+  --green:     #00ff88;
+  --orange:    #ff6600;
+  --yellow:    #ffdd00;
+  --red:       #ff2200;
+
+  --bg-dark:   #020210;
+  --bg-card:   #07071a;
+  --bg-panel:  #040412;
+  --text:      #d0e8ff;
+  --text-dim:  rgba(180,220,255,0.4);
+
+  --tile-empty:    #050514;
+  --tile-solid:    #12123a;
+  --tile-break:    #251005;
+
+  --font-arcade: 'Press Start 2P', 'Courier New', monospace;
+  --font-ui:     'Exo 2', 'Segoe UI', sans-serif;
+
+  /* Ukuran tile - diupdate JS saat game mulai */
+  --ts: 60px;
+
+  /* Glow helpers */
+  --glow-c:  0 0 8px var(--cyan),  0 0 20px rgba(0,255,255,0.4);
+  --glow-p:  0 0 8px var(--purple), 0 0 20px rgba(153,0,255,0.4);
+  --glow-o:  0 0 8px var(--orange), 0 0 20px rgba(255,102,0,0.5);
+  --glow-y:  0 0 8px var(--yellow), 0 0 20px rgba(255,221,0,0.4);
+  --glow-r:  0 0 8px var(--red),   0 0 20px rgba(255,34,0,0.4);
+}
+
+/* === RESET & BASE === */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg-dark);
+  font-family: var(--font-ui);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================================
+   LAYAR (SCREENS)
+   ============================================================ */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.screen.active { display: flex; }
+
+
+/* ============================================================
+   WELCOME SCREEN
+   ============================================================ */
+
+/* Grid animasi bergerak di latar belakang */
+.bg-grid-anim {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(0,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,255,0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  animation: grid-scroll 12s linear infinite;
+  pointer-events: none; z-index: 0;
+}
+@keyframes grid-scroll {
+  from { transform: translate(0, 0); }
+  to   { transform: translate(48px, 48px); }
+}
+
+/* Partikel mengambang di latar -->*/
+.bg-particles { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0;
+  animation: particle-rise linear infinite;
+}
+@keyframes particle-rise {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.3; }
+  100% { transform: translateY(-100vh) scale(0); opacity: 0; }
+}
+
+/* Konten utama welcome */
+.welcome-content {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 36px;
+  animation: welcome-appear 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@keyframes welcome-appear {
+  from { opacity: 0; transform: translateY(-40px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Logo bomb mengambang */
+.logo-bomb-icon {
+  font-size: 72px;
+  animation: bomb-float 2.2s ease-in-out infinite;
+  display: block; margin-bottom: 8px;
+  filter: drop-shadow(0 0 20px rgba(255,100,0,0.8));
+}
+@keyframes bomb-float {
+  0%,100% { transform: translateY(0) rotate(-8deg); }
+  50%     { transform: translateY(-18px) rotate(8deg); }
+}
+
+/* Judul besar BOMSKUY */
+.game-title {
+  font-family: var(--font-arcade);
+  font-size: clamp(36px, 6vw, 72px);
+  color: var(--cyan);
+  letter-spacing: 10px;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow:
+    0 0 10px var(--cyan),
+    0 0 25px var(--cyan),
+    0 0 50px rgba(0,255,255,0.5),
+    0 0 100px rgba(0,255,255,0.2);
+  animation: title-glow-pulse 2.5s ease-in-out infinite;
+}
+@keyframes title-glow-pulse {
+  0%,100% { text-shadow: 0 0 10px var(--cyan), 0 0 25px var(--cyan), 0 0 50px rgba(0,255,255,0.5); }
+  50%     { text-shadow: 0 0 20px var(--cyan), 0 0 45px var(--cyan), 0 0 90px rgba(0,255,255,0.7), 0 0 140px rgba(0,255,255,0.3); }
+}
+
+.game-subtitle {
+  font-family: var(--font-arcade);
+  font-size: clamp(9px, 1.5vw, 13px);
+  color: var(--purple);
+  letter-spacing: 6px;
+  margin-top: 8px;
+  text-align: center;
+  text-shadow: 0 0 8px var(--purple), 0 0 16px rgba(153,0,255,0.4);
+}
+
+/* Input nama pemain */
+.input-section { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.input-group { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+.input-label {
+  font-family: var(--font-arcade);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 3px;
+}
+
+.name-input {
+  width: clamp(220px, 30vw, 320px);
+  padding: 14px 24px;
+  background: rgba(0,255,255,0.04);
+  border: 2px solid rgba(0,255,255,0.5);
+  border-radius: 6px;
+  font-family: var(--font-arcade);
+  font-size: 13px;
+  color: var(--cyan);
+  text-align: center;
+  letter-spacing: 3px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  caret-color: var(--cyan);
+}
+.name-input::placeholder { color: rgba(0,255,255,0.25); font-size: 10px; }
+.name-input:focus {
+  border-color: var(--cyan);
+  box-shadow: var(--glow-c), inset 0 0 15px rgba(0,255,255,0.06);
+  background: rgba(0,255,255,0.07);
+}
+
+/* Tombol neon */
+.neon-btn {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: transparent;
+  border: 2px solid var(--cyan);
+  border-radius: 6px;
+  font-family: var(--font-arcade);
+  font-size: 12px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: all 0.18s ease;
+  box-shadow: 0 0 12px rgba(0,255,255,0.25), inset 0 0 12px rgba(0,255,255,0.04);
+  white-space: nowrap;
+}
+/* Efek shine saat hover */
+.neon-btn::before {
+  content: '';
+  position: absolute; top: 0; left: -110%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0,255,255,0.15), transparent);
+  transition: left 0.4s;
+}
+.neon-btn:hover::before { left: 110%; }
+.neon-btn:hover {
+  background: rgba(0,255,255,0.09);
+  box-shadow: 0 0 20px rgba(0,255,255,0.55), 0 0 45px rgba(0,255,255,0.2), inset 0 0 18px rgba(0,255,255,0.08);
+  transform: translateY(-3px);
+}
+.neon-btn:active { transform: translateY(0); }
+
+/* Tombol Win (emas) */
+.win-btn {
+  border-color: var(--yellow);
+  color: var(--yellow);
+  box-shadow: 0 0 12px rgba(255,221,0,0.25), inset 0 0 12px rgba(255,221,0,0.04);
+}
+.win-btn:hover {
+  background: rgba(255,221,0,0.09);
+  box-shadow: 0 0 20px rgba(255,221,0,0.55), 0 0 45px rgba(255,221,0,0.2);
+}
+
+/* Legenda kontrol */
+.controls-legend {
+  display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text-dim);
+}
+kbd {
+  font-family: var(--font-arcade);
+  font-size: 8px;
+  padding: 4px 8px;
+  background: rgba(0,255,255,0.08);
+  border: 1px solid rgba(0,255,255,0.3);
+  border-radius: 4px;
+  color: var(--cyan);
+}
+
+
+/* ============================================================
+   HUD (HEAD-UP DISPLAY)
+   ============================================================ */
+#hud {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: linear-gradient(180deg, rgba(2,2,20,0.98) 0%, rgba(4,4,20,0.90) 100%);
+  border-bottom: 1px solid rgba(0,255,255,0.18);
+  flex-shrink: 0;
+  z-index: 50;
+}
+.hud-card {
+  background: rgba(0,255,255,0.04);
+  border: 1px solid rgba(0,255,255,0.18);
+  border-radius: 6px;
+  padding: 5px 12px;
+  text-align: center;
+  min-width: 80px;
+}
+.hud-label {
+  font-family: var(--font-arcade);
+  font-size: 6px;
+  color: rgba(0,255,255,0.45);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+.hud-value {
+  font-family: var(--font-arcade);
+  font-size: 11px;
+  color: var(--cyan);
+  text-shadow: var(--glow-c);
+  white-space: nowrap;
+}
+#hud-name { font-size: 9px; max-width: 100px; overflow: hidden; text-overflow: ellipsis; }
+.score-display  { color: var(--yellow); text-shadow: var(--glow-y); }
+.timer-display  { color: var(--green);  text-shadow: 0 0 8px var(--green); }
+.enemy-count    { color: var(--red);    text-shadow: var(--glow-r); }
+
+
+/* ============================================================
+   GAME SCREEN LAYOUT
+   ============================================================ */
+#game-screen { background: var(--bg-dark); }
+
+#game-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+
+/* ============================================================
+   GAME GRID
+   ============================================================ */
+#game-grid {
+  display: grid;
+  /* Kolom & baris diset oleh JS via inline style */
+  position: relative;
+  border: 2px solid rgba(0,255,255,0.45);
+  box-shadow:
+    0 0 20px rgba(0,255,255,0.3),
+    0 0 50px rgba(0,255,255,0.1),
+    inset 0 0 30px rgba(0,0,60,0.7);
+  flex-shrink: 0;
+}
+
+
+/* ============================================================
+   TILE STYLES
+   ============================================================ */
+.tile {
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Tanah kosong */
+.tile-empty {
+  background: var(--tile-empty);
+  background-image:
+    linear-gradient(rgba(0,120,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,120,255,0.018) 1px, transparent 1px);
+  background-size: var(--ts) var(--ts);
+}
+
+/* Tembok solid (tidak bisa dihancurkan) */
+.tile-solid {
+  background: linear-gradient(150deg, #161630 0%, #0c0c22 60%, #080818 100%);
+  border: 1px solid rgba(80,80,200,0.3);
+  box-shadow: inset 0 0 12px rgba(0,0,80,0.9);
+}
+/* Pola berlian di tembok solid */
+.tile-solid::after {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(45deg, rgba(100,100,200,0.08) 25%, transparent 25%),
+    linear-gradient(135deg, rgba(100,100,200,0.08) 25%, transparent 25%);
+  background-size: 14px 14px;
+}
+
+/* Tembok bata (bisa dihancurkan) */
+.tile-breakable {
+  background: linear-gradient(135deg, #2e1408 0%, #1a0c05 100%);
+  border: 1px solid rgba(220,90,0,0.45);
+  box-shadow: inset 0 0 8px rgba(80,30,0,0.8);
+}
+/* Pola bata */
+.tile-breakable::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(255,80,0,0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,80,0,0.1) 1px, transparent 1px);
+  background-size: 15px 10px;
+  background-position: 0 0, 7px 0;
+}
+.tile-breakable::after {
+  content: '';
+  position: absolute; inset: 3px;
+  border: 1px solid rgba(255,80,0,0.12);
+  border-radius: 1px;
+}
+
+
+/* ============================================================
+   PLAYER
+   ============================================================ */
+#player {
+  position: absolute;
+  z-index: 20;
+  /* Ukuran & posisi diset oleh JS */
+  transition: left 0.11s linear, top 0.11s linear;
+  pointer-events: none;
+}
+.player-body {
+  width: 100%; height: 100%;
+  background: radial-gradient(circle at 38% 32%, #aaffff 0%, #00ddff 35%, #0055cc 80%);
+  border-radius: 50% 50% 45% 45%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 0 14px var(--cyan), 0 0 30px rgba(0,200,255,0.5);
+  animation: player-breathe 1.8s ease-in-out infinite;
+  position: relative;
+}
+@keyframes player-breathe {
+  0%,100% { transform: scaleY(1);    box-shadow: 0 0 14px var(--cyan), 0 0 30px rgba(0,200,255,0.5); }
+  50%     { transform: scaleY(0.94); box-shadow: 0 0 20px var(--cyan), 0 0 45px rgba(0,200,255,0.7); }
+}
+
+/* Kedipan saat invincible / tidak terkalahkan */
+#player.invincible .player-body {
+  animation: invincible-blink 0.18s linear infinite;
+}
+@keyframes invincible-blink {
+  0%,100% { opacity: 1; }
+  50%     { opacity: 0.1; }
+}
+
+
+/* ============================================================
+   MUSUH (ENEMIES)
+   ============================================================ */
+.enemy {
+  position: absolute;
+  z-index: 15;
+  transition: left 0.38s ease, top 0.38s ease;
+  pointer-events: none;
+}
+.enemy-body {
+  width: 100%; height: 100%;
+  border-radius: 38% 38% 48% 48%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  animation: enemy-hop 0.85s ease-in-out infinite;
+}
+
+/* Warna tiap musuh berbeda */
+.enemy-type-0 .enemy-body {
+  background: radial-gradient(circle at 35% 32%, #ff9999, #ff2200, #880000);
+  box-shadow: 0 0 14px rgba(255,34,0,0.7), 0 0 28px rgba(255,0,0,0.3);
+}
+.enemy-type-1 .enemy-body {
+  background: radial-gradient(circle at 35% 32%, #ff88ff, #cc00ff, #550066);
+  box-shadow: 0 0 14px rgba(200,0,255,0.7), 0 0 28px rgba(200,0,255,0.3);
+}
+.enemy-type-2 .enemy-body {
+  background: radial-gradient(circle at 35% 32%, #ffee88, #ffaa00, #884400);
+  box-shadow: 0 0 14px rgba(255,150,0,0.7), 0 0 28px rgba(255,150,0,0.3);
+}
+.enemy-type-3 .enemy-body {
+  background: radial-gradient(circle at 35% 32%, #88ffbb, #00cc66, #006633);
+  box-shadow: 0 0 14px rgba(0,200,100,0.7), 0 0 28px rgba(0,200,100,0.3);
+}
+
+@keyframes enemy-hop {
+  0%,100% { transform: translateY(0)   scaleX(1);    }
+  25%     { transform: translateY(-5px) scaleX(0.92); }
+  75%     { transform: translateY(2px)  scaleX(1.06); }
+}
+
+/* Efek mati musuh */
+.enemy.dying {
+  transition: transform 0.3s ease, opacity 0.3s ease !important;
+  transform: scale(0) !important;
+  opacity: 0 !important;
+}
+
+
+/* ============================================================
+   BOM
+   ============================================================ */
+.bomb {
+  position: absolute;
+  z-index: 18;
+  pointer-events: none;
+  /* Ukuran & posisi diset JS */
+}
+.bomb-svg {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+}
+.bomb-body {
+  position: absolute;
+  bottom: 4px; left: 50%; transform: translateX(-50%);
+  width: 74%; height: 74%;
+  background: radial-gradient(circle at 35% 30%, #ff9966, #cc2200, #440000);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 0 10px rgba(255,80,0,0.8), 0 0 22px rgba(255,40,0,0.5);
+  animation: bomb-throb 0.55s ease-in-out infinite;
+}
+@keyframes bomb-throb {
+  0%,100% { transform: translateX(-50%) scale(1);    box-shadow: 0 0 10px rgba(255,80,0,0.8); }
+  50%     { transform: translateX(-50%) scale(1.09); box-shadow: 0 0 18px rgba(255,80,0,1), 0 0 35px rgba(255,40,0,0.7); }
+}
+.bomb-fuse {
+  position: absolute;
+  top: 4px; right: 26%;
+  width: 4px; height: 10px;
+  background: linear-gradient(180deg, #ffee00, #ff8800);
+  border-radius: 2px;
+  transform-origin: bottom center;
+}
+.bomb-spark {
+  position: absolute;
+  top: -6px; right: calc(26% - 4px);
+  font-size: 12px;
+  animation: spark-spin 0.15s linear infinite;
+}
+@keyframes spark-spin {
+  from { transform: rotate(0deg) scale(1); }
+  to   { transform: rotate(180deg) scale(1.4); }
+}
+
+/* Cincin countdown SVG */
+.bomb-ring-bg { fill: none; stroke: rgba(255,200,0,0.2); stroke-width: 2; }
+.bomb-ring-fg {
+  fill: none;
+  stroke: #ffdd00;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transform-origin: center;
+  transform: rotate(-90deg);
+  transition: stroke-dashoffset 0.08s linear;
+}
+
+
+/* ============================================================
+   LEDAKAN (EXPLOSIONS)
+   ============================================================ */
+.explosion {
+  position: absolute;
+  z-index: 25;
+  pointer-events: none;
+  animation: explode-out 0.65s ease-out forwards;
+}
+.explosion::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(circle,
+    rgba(255,255,180,0.95) 5%,
+    rgba(255,200,0,0.85) 25%,
+    rgba(255,100,0,0.75) 55%,
+    rgba(255,30,0,0.4) 80%,
+    transparent 100%
+  );
+  animation: explode-inner 0.65s ease-out forwards;
+}
+/* Titik pusat: lebih terang */
+.explosion.exp-center::before {
+  background: radial-gradient(circle,
+    #ffffff 5%,
+    rgba(255,255,150,0.95) 20%,
+    rgba(255,200,0,0.9) 45%,
+    rgba(255,80,0,0.6) 75%,
+    transparent 100%
+  );
+}
+
+@keyframes explode-out {
+  0%   { opacity: 1; transform: scale(0.2); }
+  35%  { opacity: 1; transform: scale(1.12); }
+  100% { opacity: 0; transform: scale(0.95); }
+}
+@keyframes explode-inner {
+  0%   { opacity: 1; transform: scale(0.4); }
+  40%  { opacity: 0.9; transform: scale(1.15); }
+  100% { opacity: 0; transform: scale(0.85); }
+}
+
+
+/* ============================================================
+   ITEM / POWER-UP
+   ============================================================ */
+.item {
+  position: absolute;
+  z-index: 12;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  animation: item-hover 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 0 6px rgba(255,255,100,0.8));
+}
+@keyframes item-hover {
+  0%,100% { transform: translateY(0)   scale(1);    filter: drop-shadow(0 0 6px rgba(255,255,100,0.8)); }
+  50%     { transform: translateY(-6px) scale(1.08); filter: drop-shadow(0 0 12px rgba(255,255,100,1)); }
+}
+.item.collected {
+  animation: item-pickup 0.35s ease-out forwards !important;
+}
+@keyframes item-pickup {
+  0%   { transform: scale(1);   opacity: 1; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+
+/* ============================================================
+   STATUS BAR BAWAH
+   ============================================================ */
+#status-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 6px 20px;
+  background: rgba(2,2,18,0.95);
+  border-top: 1px solid rgba(0,255,255,0.1);
+  flex-shrink: 0;
+  font-family: var(--font-arcade);
+  font-size: 8px;
+}
+.status-item {
+  display: flex; align-items: center; gap: 6px;
+  color: rgba(0,255,255,0.45);
+}
+.status-icon { font-size: 14px; }
+.status-label { color: rgba(0,255,255,0.35); }
+.status-val { color: var(--cyan); text-shadow: 0 0 6px var(--cyan); }
+.hint-item { margin-left: auto; font-size: 7px; color: rgba(0,255,255,0.2); letter-spacing: 1px; }
+
+
+/* ============================================================
+   KONTROL MOBILE (D-PAD)
+   ============================================================ */
+#mobile-controls {
+  display: none; /* tampil hanya di layar kecil */
+  width: 100%;
+  justify-content: center;
+  padding: 8px 0 4px;
+  background: rgba(2,2,18,0.9);
+  border-top: 1px solid rgba(0,255,255,0.1);
+  flex-shrink: 0;
+}
+.dpad { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.dpad-row { display: flex; gap: 4px; }
+
+.dpad-btn {
+  width: 52px; height: 52px;
+  background: rgba(0,255,255,0.07);
+  border: 1px solid rgba(0,255,255,0.35);
+  border-radius: 8px;
+  color: var(--cyan);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background 0.1s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.dpad-btn:active, .dpad-btn.pressed {
+  background: rgba(0,255,255,0.25);
+  box-shadow: 0 0 10px rgba(0,255,255,0.5);
+}
+.dpad-center {
+  background: rgba(255,100,0,0.1);
+  border-color: rgba(255,100,0,0.5);
+  font-size: 22px;
+}
+.dpad-center:active { background: rgba(255,100,0,0.3); box-shadow: 0 0 10px rgba(255,100,0,0.5); }
+
+
+/* ============================================================
+   EFEK LAYAR (FLASH, SCORE POP)
+   ============================================================ */
+
+/* Flash merah saat mati */
+.screen-flash {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 30;
+  animation: flash-out 0.45s ease-out forwards;
+}
+.screen-flash.red   { background: rgba(255,0,0,0.45); }
+.screen-flash.white { background: rgba(255,255,255,0.3); }
+@keyframes flash-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* Teks skor yang muncul & naik */
+.score-pop {
+  position: absolute;
+  z-index: 35;
+  font-family: var(--font-arcade);
+  font-size: 11px;
+  pointer-events: none;
+  color: #ffdd00;
+  text-shadow: 0 0 8px #ffdd00, 0 0 14px rgba(255,200,0,0.6);
+  white-space: nowrap;
+  animation: score-rise 1.1s ease-out forwards;
+}
+@keyframes score-rise {
+  0%   { opacity: 1; transform: translate(-50%, 0)   scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -70px) scale(0.5); }
+}
+
+
+/* ============================================================
+   OVERLAY SCREENS (GAME OVER, WIN)
+   ============================================================ */
+.overlay-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 0, 15, 0.88);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+.win-backdrop { background: rgba(0, 5, 30, 0.88); }
+
+.overlay-card {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column;
+  align-items: center; gap: 22px;
+  padding: 40px 48px;
+  background: linear-gradient(160deg, rgba(6,6,25,0.98), rgba(3,3,16,0.99));
+  border: 1px solid rgba(0,255,255,0.28);
+  border-radius: 12px;
+  box-shadow:
+    0 0 30px rgba(0,255,255,0.15),
+    0 0 80px rgba(0,50,255,0.08),
+    inset 0 0 40px rgba(0,0,80,0.4);
+  animation: card-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  max-width: 90vw;
+}
+.gameover-card { border-color: rgba(255,34,0,0.35); box-shadow: 0 0 30px rgba(255,0,0,0.15), inset 0 0 40px rgba(80,0,0,0.2); }
+.win-card      { border-color: rgba(255,221,0,0.35); box-shadow: 0 0 30px rgba(255,200,0,0.15), inset 0 0 40px rgba(80,60,0,0.2); }
+
+@keyframes card-pop {
+  from { opacity: 0; transform: scale(0.75); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.overlay-emoji {
+  font-size: 56px;
+  animation: emoji-rock 0.6s ease-in-out infinite alternate;
+}
+.trophy-bounce {
+  animation: trophy-bounce 0.7s ease-in-out infinite alternate;
+}
+@keyframes emoji-rock   { from { transform: rotate(-8deg) scale(1); } to { transform: rotate(8deg) scale(1.15); } }
+@keyframes trophy-bounce{ from { transform: translateY(0) scale(1); } to { transform: translateY(-10px) scale(1.1); } }
+
+.overlay-title {
+  font-family: var(--font-arcade);
+  font-size: clamp(22px, 4vw, 34px);
+  letter-spacing: 4px;
+  text-align: center;
+}
+.gameover-title { color: var(--red);    text-shadow: var(--glow-r); }
+.win-title      { color: var(--yellow); text-shadow: var(--glow-y); }
+
+/* Tabel hasil */
+.result-table {
+  display: flex; flex-direction: column; gap: 10px;
+  width: 100%; min-width: 280px;
+}
+.result-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 16px;
+  background: rgba(0,255,255,0.04);
+  border: 1px solid rgba(0,255,255,0.1);
+  border-radius: 6px;
+}
+.result-label {
+  font-family: var(--font-arcade); font-size: 7px;
+  color: rgba(0,255,255,0.45); letter-spacing: 1px;
+}
+.result-val {
+  font-family: var(--font-arcade); font-size: 11px;
+  color: var(--cyan); text-shadow: 0 0 6px var(--cyan);
+}
+.result-val.highlight { color: #88ffff; font-size: 14px; }
+.result-val.gold-text { color: var(--yellow); text-shadow: var(--glow-y); }
+
+
+/* ============================================================
+   CONFETTI (layar menang)
+   ============================================================ */
+#confetti-container {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 5; overflow: hidden;
+}
+.confetti-p {
+  position: absolute;
+  top: -30px;
+  animation: confetti-fall linear forwards;
+  border-radius: 2px;
+}
+@keyframes confetti-fall {
+  0%   { top: -30px; opacity: 1; transform: rotate(0deg) translate(0, 0); }
+  100% { top: 110vh;  opacity: 0.6; transform: rotate(var(--spin)) translate(var(--drift), 0); }
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+/* Tampilkan kontrol mobile di layar kecil */
+@media (max-width: 700px), (max-height: 500px) {
+  #mobile-controls { display: flex; }
+  .hint-item { display: none; }
+  .controls-legend { display: none; }
+  .hud-card { min-width: 55px; padding: 4px 8px; }
+  .hud-value { font-size: 9px; }
+  .hud-label { font-size: 5px; }
+  #status-bar { gap: 12px; font-size: 7px; }
+}
+
+@media (max-width: 480px) {
+  .overlay-card  { padding: 24px 20px; gap: 16px; }
+  .overlay-title { font-size: 20px; }
+  .result-label  { font-size: 6px; }
+  .result-val    { font-size: 10px; }
+  .neon-btn      { font-size: 10px; padding: 12px 20px; }
+  #hud           { gap: 4px; padding: 5px 8px; }
+  .hud-card      { min-width: 44px; padding: 3px 5px; }
+  .hud-value     { font-size: 8px; }
+}
